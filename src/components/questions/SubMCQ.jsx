@@ -11,15 +11,7 @@ import Button from "../Button";
 import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
 
-const MCQ = ({ id, isSelected }) => {
-  const getQuestionById = useTestStore((state) => state.getQuestionById);
-  const updateQuestion = useTestStore((state) => state.updateQuestion);
-
-  const inputRefs = useRef([]);
-
-  const temp = getQuestionById(id);
-  const [thisQuestion, setThisQuestion] = useState({ ...temp });
-
+const SubMCQ = ({ id, parentId, isSelected }) => {
   // Function to handle drag end
   const handleOnDragEnd = (result) => {
     const { source, destination } = result;
@@ -72,8 +64,8 @@ const MCQ = ({ id, isSelected }) => {
       });
     }
 
-    document.getElementById(`newOption-${id}`).value = "";
-    document.getElementById(`newOption-${id}`).blur();
+    document.getElementById(`newOptionSub-${id}`).value = "";
+    document.getElementById(`newOptionSub-${id}`).blur();
 
     // Focus the new input field after adding it
     setTimeout(() => {
@@ -138,8 +130,20 @@ const MCQ = ({ id, isSelected }) => {
   };
 
   // Function to update the Question in Store
-  const handleUpdateStore = () => {
-    updateQuestion(id, thisQuestion);
+  const handleUpdateQuestion = () => {
+    const thisIndex = thisParentQuestion.subQuestions.find(
+      (subQuestion) => subQuestion.id === id,
+    );
+
+    const startSlice = thisParentQuestion.subQuestions.slice(0, thisIndex);
+    const endSlice = thisParentQuestion.subQuestions.slice(
+      thisIndex + 1,
+      thisParentQuestion.subQuestions.length,
+    );
+    setThisParentQuestion({
+      ...thisParentQuestion,
+      subQuestions: [...startSlice, { ...thisQuestion }, ...endSlice],
+    });
   };
 
   if (isSelected)
@@ -280,7 +284,7 @@ const MCQ = ({ id, isSelected }) => {
                   <input
                     className="h-10 rounded-md border border-neutral-300 pl-1"
                     placeholder="Add New Option"
-                    id={`newOption-${id}`}
+                    id={`newOptionSub-${id}`}
                     style={{
                       backgroundColor: "#ffffff",
                     }}
@@ -306,7 +310,7 @@ const MCQ = ({ id, isSelected }) => {
                 </label>
                 <Input
                   width="6rem"
-                  name="negPoints"
+                  name="points"
                   type="text"
                   value={`${thisQuestion.points}`}
                   onChange={(e) => handlePointsChange(e, "points")}
@@ -345,9 +349,14 @@ const MCQ = ({ id, isSelected }) => {
           <div className="flex w-full justify-end">
             <Button
               disabled={
-                isEqual(getQuestionById(id), thisQuestion) || !isValidated()
+                isEqual(
+                  thisParentQuestion.subQuestions.find(
+                    (subQuestion) => subQuestion.id === id,
+                  ),
+                  thisQuestion,
+                ) || !isValidated()
               }
-              onClick={handleUpdateStore}
+              onClick={handleUpdateQuestion}
               className="border-none bg-sky-500 text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-neutral-500"
             >
               Save Question Details
@@ -403,9 +412,10 @@ const MCQ = ({ id, isSelected }) => {
   );
 };
 
-MCQ.propTypes = {
+SubMCQ.propTypes = {
   id: PropTypes.string,
+  parentId: PropTypes.string,
   isSelected: PropTypes.bool,
 };
 
-export default MCQ;
+export default SubMCQ;

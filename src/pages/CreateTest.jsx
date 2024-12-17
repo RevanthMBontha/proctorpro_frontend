@@ -1,39 +1,22 @@
 import { MdUploadFile, MdCloudUpload } from "react-icons/md";
-import { v4 as uuidV4 } from "uuid";
 import Question from "../components/questions/Question";
 import Button from "../components/Button";
 import useTestStore from "../store/test.store";
+import { getNewQuestion } from "../data";
 
 const CreateTest = () => {
   const questions = useTestStore((state) => state.questions);
   const addQuestion = useTestStore((state) => state.addQuestion);
+  const addQuestionAtIndex = useTestStore((state) => state.addQuestionAtIndex);
   const selectedQuestionId = useTestStore((state) => state.selectedQuestionId);
 
-  console.log(questions);
-
-  const newQuestion = {
-    id: uuidV4(),
-    questionType: "mcq",
-    questionText: "",
-    questionImg: "",
-    options: [
-      { id: uuidV4(), value: "" },
-      { id: uuidV4(), value: "" },
-    ], //Only forMCQs
-    correctAnswer: null, //String for MCQ, Array for Cloze, Object for Categorise
-    comprehensionText: "", //String for Comprehension
-    subQuestions: [], //Array of sub-questions for Comprehension
-    categories: [
-      { id: uuidV4(), label: "", value: "" },
-      { id: uuidV4(), label: "", value: "" },
-    ], //Array of categories for Categorise
-    items: [], //For Categorise
-    points: 0,
-    negPoints: 0,
+  const handleAddQuestion = () => {
+    addQuestion(getNewQuestion());
   };
 
-  const handleAddQuestion = () => {
-    addQuestion(newQuestion);
+  // Function to handle adding a new question below the selected question
+  const handleAddQuestionBelow = (questionNumber) => {
+    addQuestionAtIndex(questionNumber - 1, getNewQuestion());
   };
 
   return (
@@ -42,13 +25,14 @@ const CreateTest = () => {
         Controls
       </div>
       <div className="flex h-fit w-full flex-col gap-y-8 py-8">
-        {questions.map((question, index) => (
+        {questions?.map((question, index) => (
           <Question
             key={question.id}
             id={question.id}
             questionNumber={index + 1}
             questionType={question.questionType}
             isSelected={selectedQuestionId === question.id}
+            handleAddQuestionBelow={handleAddQuestionBelow}
           >
             {question.questionType === "mcq" && (
               <Question.MCQ
@@ -63,11 +47,15 @@ const CreateTest = () => {
               />
             )}
             {question.questionType === "cloze" && (
-              <Question.Cloze question={question} />
+              <Question.Cloze
+                id={question.id}
+                isSelected={selectedQuestionId === question.id}
+              />
             )}
             {question.questionType === "comprehension" && (
               <Question.Comprehension
-                question={question}
+                id={question.id}
+                questionNumber={index + 1}
                 isSelected={selectedQuestionId === question.id}
               />
             )}

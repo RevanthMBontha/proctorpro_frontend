@@ -1,4 +1,4 @@
-import PropTypes from "prop-types";
+import { v4 as uuidV4 } from "uuid";
 import { FaEllipsisVertical, FaPlus, FaRegCopy } from "react-icons/fa6";
 import { MdDelete } from "react-icons/md";
 import Select from "react-select";
@@ -8,6 +8,7 @@ import Cloze from "./Cloze";
 import Comprehension from "./Comprehension";
 import MCQ from "./MCQ";
 import useTestStore from "../../store/test.store";
+import PropTypes from "prop-types";
 
 const Question = ({
   id,
@@ -15,12 +16,16 @@ const Question = ({
   questionType,
   isSelected,
   children,
+  handleAddQuestionBelow,
 }) => {
-  const selectQuestion = useTestStore((state) => state.selectQuestion);
+  const selectQuestionId = useTestStore((state) => state.selectQuestionId);
   const resetSelection = useTestStore((state) => state.resetSelection);
   const getQuestionById = useTestStore((state) => state.getQuestionById);
   const updateQuestion = useTestStore((state) => state.updateQuestion);
   const deleteQuestion = useTestStore((state) => state.deleteQuestion);
+  const copyQuestionToIndex = useTestStore(
+    (state) => state.copyQuestionToIndex,
+  );
 
   let thisQuestion = getQuestionById(id);
 
@@ -40,15 +45,14 @@ const Question = ({
   };
 
   // Function to handle question selection
-  const handleSelectQuestion = () => {
-    selectQuestion(id);
+  const handleSelectQuestionId = () => {
+    selectQuestionId(id);
   };
 
-  // Function to handle adding a new question below the selected question
-  const handleAddQuestionBelow = () => {};
-
-  // Functiont to handle copying the selected question into a new question below
-  const handleCopyQuestion = () => {};
+  // Function to handle copying the selected question into a new question below
+  const handleCopyQuestion = () => {
+    copyQuestionToIndex(questionNumber, { ...thisQuestion, id: uuidV4() });
+  };
 
   // Function to handle deleting the selected question
   const handleDeleteQuestion = () => {
@@ -58,7 +62,7 @@ const Question = ({
 
   return (
     <div
-      onClick={handleSelectQuestion}
+      onClick={handleSelectQuestionId}
       className="flex w-full flex-grow cursor-pointer"
     >
       {/* Selection Highlighter */}
@@ -68,7 +72,7 @@ const Question = ({
       {/* Question Component */}
       <div className="flex flex-grow flex-col gap-y-4 rounded-md rounded-l-none border border-l-0 border-neutral-300 p-4">
         <div className="flex w-full items-center justify-between border-b border-neutral-300">
-          <h1 className="text-xl font-semibold">{`Question ${questionNumber.toString().padStart(2, "0")}`}</h1>
+          <h1 className="text-xl font-semibold">{`Question ${questionNumber.toString()}`}</h1>
           <div className="flex items-center justify-end gap-x-2 py-2">
             {isSelected && (
               <Select
@@ -95,7 +99,7 @@ const Question = ({
         className={`${isSelected ? "visible" : "invisible"} flex h-full w-fit flex-col items-center gap-y-4 p-2`}
       >
         <Button
-          onClick={handleAddQuestionBelow}
+          onClick={() => handleAddQuestionBelow(questionNumber)}
           className="rounded-full border-none bg-sky-700 p-2 text-white hover:bg-sky-900"
         >
           <FaPlus />
@@ -123,6 +127,7 @@ Question.propTypes = {
   questionType: PropTypes.string,
   isSelected: PropTypes.bool,
   children: PropTypes.node,
+  handleAddQuestionBelow: PropTypes.func,
 };
 
 export default Question;

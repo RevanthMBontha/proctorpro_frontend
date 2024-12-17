@@ -1,15 +1,38 @@
 import { create } from "zustand";
 
 const useTestStore = create((set, get) => ({
-  // State variables to track the questions and the selected question
+  // State variables to track the questions, the selected question and selected sub question
   questions: [],
   selectedQuestionId: null,
+  selectedSubQuestionId: null,
 
-  //   Function to add a new question to the test
+  // Function to get the selected question
+  getQuestionById: (id) => {
+    const questions = get().questions;
+    return questions.find((question) => question.id === id);
+  },
+
+  // Function to add a new question to the test
   addQuestion: (newQuestion) =>
     set((state) => ({
       questions: [...state.questions, newQuestion],
     })),
+
+  // Function to add a new question at a index
+  addQuestionAtIndex: (index, newQuestion) =>
+    set((state) => {
+      const startSlice = state.questions.slice(0, index);
+      const endSlice = state.questions.slice(index + 1, state.questions.length);
+      return [...startSlice, newQuestion, ...endSlice];
+    }),
+
+  // Function to copy a question to the index below
+  copyQuestionToIndex: (index, copiedQuestion) =>
+    set((state) => {
+      const startSlice = state.questions.slice(0, index);
+      const endSlice = state.questions.slice(index + 1, length);
+      return [...startSlice, copiedQuestion, ...endSlice];
+    }),
 
   // Function to update a question
   updateQuestion: (id, updatedQuestion) =>
@@ -35,8 +58,8 @@ const useTestStore = create((set, get) => ({
       questions: [...state.questions.filter((question) => question.id !== id)],
     })),
 
-  // Function to select a particular question based on id
-  selectQuestion: (id) =>
+  // Function to select a question id
+  selectQuestionId: (id) =>
     set(() => ({
       selectedQuestionId: id,
     })),
@@ -47,11 +70,24 @@ const useTestStore = create((set, get) => ({
       selectedQuestionId: null,
     })),
 
-  // Function to get the selected question
-  getQuestionById: (id) => {
+  // -------------------------------------
+  // For subQuestions
+
+  // Function to select subQuestion Id
+  selectSubQuestionId: (id) => set(() => ({ selectedSubQuestionId: id })),
+
+  // Function to get the selected subQuestion
+  getSubQuestionById: (qId, subQId) => {
     const questions = get().questions;
-    return questions.find((question) => question.id === id);
+    const question = questions.find((question) => question.id === qId);
+    const subQuestion = question.subQuestions.find(
+      (subQuestion) => subQuestion.id === subQId,
+    );
+    return subQuestion;
   },
+
+  // Function to get new subQuestion
+  getNewSubQuestion: () => get().newSubQuestion,
 }));
 
 export default useTestStore;

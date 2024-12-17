@@ -272,9 +272,6 @@ const Categorise = ({ id, isSelected }) => {
     // Empty Question Text case
     if (!thisQuestion.questionText) return false;
 
-    // Zero points for the question case
-    if (parseInt(thisQuestion.points) === 0) return false;
-
     return true;
   };
 
@@ -309,7 +306,7 @@ const Categorise = ({ id, isSelected }) => {
                       ref={provided.innerRef}
                       className="flex w-fit flex-col gap-y-4 rounded-lg"
                     >
-                      {thisQuestion.categories.map((category, index) => (
+                      {thisQuestion.categories?.map((category, index) => (
                         <Draggable
                           key={category.id}
                           draggableId={category.id}
@@ -440,7 +437,7 @@ const Categorise = ({ id, isSelected }) => {
                       ref={provided.innerRef}
                       className="flex w-full flex-col gap-y-4 rounded-lg"
                     >
-                      {thisQuestion.items.map((item, index) => (
+                      {thisQuestion.items?.map((item, index) => (
                         <Draggable
                           key={item.id}
                           draggableId={item.id}
@@ -559,7 +556,7 @@ const Categorise = ({ id, isSelected }) => {
                     />
                   </div>
                   {/* Icon to delete the option */}
-                  <Button className="rounded-full border-none bg-white p-1 text-white hover:bg-red-400">
+                  <Button className="rounded-full border-none bg-white p-1 text-white">
                     <IoClose size={18} />
                   </Button>
                 </div>
@@ -580,7 +577,7 @@ const Categorise = ({ id, isSelected }) => {
                 </label>
                 <Input
                   width="6rem"
-                  name="negPoints"
+                  name="points"
                   type="text"
                   value={`${thisQuestion.points}`}
                   onChange={(e) => handlePointsChange(e, "points")}
