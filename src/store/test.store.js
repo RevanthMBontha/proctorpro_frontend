@@ -5,8 +5,8 @@ const useTestStore = create((set, get) => ({
   id: null,
   name: "",
   description: "",
-  imgSrc: null,
-  img: null,
+  testImgSrc: null,
+  testImg: null,
   questions: [],
   createdBy: null,
   selectedQuestionId: null,
@@ -17,6 +17,8 @@ const useTestStore = create((set, get) => ({
 
   // Function to set the description of the test
   setTestDescription: (value) => set(() => ({ description: value })),
+
+  setTestImg: (file) => set(() => ({ testImg: file })),
 
   // Function to get the selected question
   getQuestionById: (id) => {

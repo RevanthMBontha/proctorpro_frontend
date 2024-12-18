@@ -1,99 +1,54 @@
-import { MdUploadFile, MdCloudUpload } from "react-icons/md";
-import { FaRegImage, FaEye, FaEllipsisVertical } from "react-icons/fa6";
-import Question from "../components/questions/Question";
+import { useNavigate } from "react-router";
+import { FaEllipsisVertical, FaPlus } from "react-icons/fa6";
 import Button from "../components/Button";
-import useTestStore from "../store/test.store";
-import { getNewQuestion } from "../data";
-import TestDetails from "../components/TestDetails";
 
 const CreateTest = () => {
-  const questions = useTestStore((state) => state.questions);
-  const addQuestion = useTestStore((state) => state.addQuestion);
-  const selectedQuestionId = useTestStore((state) => state.selectedQuestionId);
-
-  const darkTestBg =
-    "https://images.pexels.com/photos/29820973/pexels-photo-29820973/free-photo-of-close-up-shot-of-dark-green-nettle-leaves.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2";
-
-  const grayTestBg =
-    "https://images.pexels.com/photos/29777332/pexels-photo-29777332/free-photo-of-frost-covered-pine-branch-with-pine-cone-in-winter.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2";
-
-  const lightTestBg =
-    "https://images.pexels.com/photos/325185/pexels-photo-325185.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2";
-
-  const handleAddQuestion = () => {
-    addQuestion(getNewQuestion());
-  };
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
 
   return (
-    <div className="flex flex-1 flex-col gap-y-4 overflow-y-auto p-0">
-      <div className="relative flex h-[300px] w-full items-end justify-between border-b-2 border-neutral-300">
-        <img
-          className="h-full w-full object-cover object-center"
-          src={darkTestBg}
-          alt="testBackground Image"
-        />
-        <TestDetails />
-        <div className="absolute bottom-4 right-4 flex gap-x-2 rounded-md bg-black bg-opacity-40">
-          <Button className="aspect-square border-none p-2">
-            <FaRegImage className="text-white" size={24} />
-          </Button>
-          <Button className="aspect-square border-none p-2">
-            <FaEye className="text-white" size={24} />
-          </Button>
-          <Button className="aspect-square border-none p-2">
-            <FaEllipsisVertical className="text-white" size={24} />
-          </Button>
-        </div>
+    <div className="flex flex-grow flex-col gap-y-8 overflow-y-auto p-8">
+      <div className="flex flex-col gap-y-2">
+        <h1 className="text-3xl font-bold">My Tests</h1>
+        <hr className="border-neutral-300" />
       </div>
-      <div className="flex h-fit w-full flex-col gap-y-8 px-8 py-8">
-        {questions?.map((question, index) => (
-          <Question
-            key={question.id}
-            id={question.id}
-            questionNumber={index + 1}
-            questionType={question.questionType}
-            isSelected={selectedQuestionId === question.id}
-          >
-            {question.questionType === "mcq" && (
-              <Question.MCQ
-                id={question.id}
-                isSelected={selectedQuestionId === question.id}
-              />
-            )}
-            {question.questionType === "categorise" && (
-              <Question.Categorise
-                id={question.id}
-                isSelected={selectedQuestionId === question.id}
-              />
-            )}
-            {question.questionType === "cloze" && (
-              <Question.Cloze
-                id={question.id}
-                isSelected={selectedQuestionId === question.id}
-              />
-            )}
-            {question.questionType === "comprehension" && (
-              <Question.Comprehension
-                id={question.id}
-                questionNumber={index + 1}
-                isSelected={selectedQuestionId === question.id}
-              />
-            )}
-          </Question>
-        ))}
-      </div>
-      <div className="flex h-fit w-full items-center justify-center gap-x-8">
+
+      {/* List of created Tests */}
+      <div className="grid flex-1 grid-cols-3 gap-4 p-4">
+        {/* Create new Test */}
         <Button
-          className="flex items-center gap-x-2 border-sky-700 text-sky-700 hover:border-sky-900 hover:text-sky-900"
-          onClick={handleAddQuestion}
+          onClick={() => navigate("/test-admin/create/new")}
+          className="flex h-28 w-full cursor-pointer rounded-lg border-2 border-dashed border-sky-700 bg-neutral-200 p-0"
         >
-          <MdUploadFile size={20} />
-          Add Question
+          <div className="flex h-full flex-[1] flex-col items-center justify-center p-2">
+            <FaPlus className="aspect-square h-full w-full text-green-700" />
+            <span className="text-lg text-green-700">Add New</span>
+          </div>
+          <div className="flex h-full flex-[2] items-start justify-start p-2 text-start text-sm">
+            MCQs, Categorizations, Fill in the Blanks, and Comprehensions are
+            supported.
+          </div>
         </Button>
-        <Button className="flex items-center gap-x-2 border-none bg-sky-700 text-white hover:bg-sky-900">
-          <MdCloudUpload size={20} />
-          Save
-        </Button>
+
+        {/* Get a list of created Tests */}
+        {user.tests.map((item, index) => (
+          <Button
+            key={index + 1}
+            onClick={() => navigate(`/test-admin/create/${item}`)}
+            className="flex h-28 w-full cursor-pointer rounded-lg border-none bg-neutral-200 p-0"
+          >
+            <div className="flex h-full flex-[1] flex-col items-center justify-center rounded-md rounded-r-none bg-pink-400 p-2">
+              <p className="text-6xl text-white">{item}</p>
+            </div>
+            <div className="relative flex h-full flex-[2] flex-col items-start justify-start gap-y-1 p-2 text-start text-base">
+              <p className="text-2xl">Test Title</p>
+              <p>Test Description</p>
+              <Button className="absolute right-2 top-2 border-none p-1">
+                <FaEllipsisVertical />
+              </Button>
+            </div>
+          </Button>
+        ))}
       </div>
     </div>
   );

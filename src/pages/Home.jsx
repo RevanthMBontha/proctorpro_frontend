@@ -6,12 +6,14 @@ import Table from "../components/Table";
 const Home = () => {
   const columns = ["name", "settings", "created at", "started", "finished", ""];
 
+  const user = JSON.parse(localStorage.getItem("user"));
+
   return (
     <div className="flex flex-grow flex-col gap-y-8 overflow-y-auto p-8">
       {/* Introduction Section to user */}
       <div className="flex w-full items-center justify-between">
         <div className="flex flex-col gap-y-1">
-          <p className="text-2xl font-semibold">Hey, User 👋</p>
+          <p className="text-2xl font-semibold">Hey, {user.firstName} 👋</p>
           <p className="text-sm text-neutral-400">
             You can see all your tests below
           </p>
@@ -29,7 +31,7 @@ const Home = () => {
 
       {/* Table to view the Tests */}
       <div className="h-full w-full overflow-y-auto">
-        <Table columns={columns} />
+        <Table columns={columns} rows={user.tests} />
       </div>
     </div>
   );

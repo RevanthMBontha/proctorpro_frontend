@@ -1,7 +1,10 @@
-import { Outlet } from "react-router";
+import { Navigate, Outlet } from "react-router";
 
 const IsNotAuthRoute = () => {
-  return <Outlet />;
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) return <Outlet />;
+  else return <Navigate to={"/test-admin"} />;
 };
 
 export default IsNotAuthRoute;
