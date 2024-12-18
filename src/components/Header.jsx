@@ -1,4 +1,5 @@
-import { FaAngleDown } from "react-icons/fa6";
+import { FaAngleDown, FaUser } from "react-icons/fa6";
+import { LuLogOut } from "react-icons/lu";
 import Button from "./Button";
 import { useState } from "react";
 import DropDown from "./portals/DropDown";
@@ -6,32 +7,32 @@ import DropDown from "./portals/DropDown";
 const Header = () => {
   const [isDropdownOpen, setIsDropDownOpen] = useState(false);
   return (
-    <div className="flex h-16 w-full flex-shrink-0 items-center justify-end bg-neutral-200 shadow-md">
+    <div className="flex h-16 w-full flex-shrink-0 items-center justify-end bg-white shadow-md">
       <div className="relative h-full w-fit">
         <Button
           id="header-dropdown"
           onClick={() => setIsDropDownOpen(!isDropdownOpen)}
-          className="flex h-full items-center gap-x-2 rounded-none border-none bg-white"
+          className="flex h-full items-center gap-x-2 rounded-none border border-b-0 border-r-0 border-t-0 border-neutral-300 bg-white"
         >
-          Hey, User 👋 <FaAngleDown />
+          Hey, Revanth 👋 <FaAngleDown />
         </Button>
         <DropDown identifier="header-dropdown" isOpen={isDropdownOpen}>
-          <div className="flex w-fit flex-col">
+          <div className="flex w-36 flex-col">
             <p
               onClick={() => {
                 setIsDropDownOpen(!isDropdownOpen);
               }}
-              className="rounded-md p-2 px-6 hover:bg-sky-500"
+              className="flex items-center gap-x-2 rounded-md p-2 px-6 text-end hover:bg-sky-500"
             >
-              Account
+              Account <FaUser size={12} />
             </p>
             <p
               onClick={() => {
                 setIsDropDownOpen(!isDropdownOpen);
               }}
-              className="rounded-md p-2 px-6 hover:bg-sky-500"
+              className="flex items-center gap-x-2 rounded-md p-2 px-6 text-end hover:bg-sky-500"
             >
-              Logout
+              Logout <LuLogOut size={12} />
             </p>
           </div>
         </DropDown>

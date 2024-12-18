@@ -7,12 +7,11 @@ import { PiSquaresFour } from "react-icons/pi";
 import { IoClose } from "react-icons/io5";
 import { isEqual } from "lodash";
 import { v4 as uuidV4 } from "uuid";
-import Input from "./../Input";
 import Button from "../Button";
 import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
 
-const Categorise = ({ id, isSelected }) => {
+const Categorise = ({ id, isSelected, setAreEqual }) => {
   const getQuestionById = useTestStore((state) => state.getQuestionById);
   const updateQuestion = useTestStore((state) => state.updateQuestion);
 
@@ -280,12 +279,14 @@ const Categorise = ({ id, isSelected }) => {
     updateQuestion(id, thisQuestion);
   };
 
+  setAreEqual(isEqual(getQuestionById(id), thisQuestion) && isValidated());
+
   if (isSelected)
     return (
       <div className="flex h-fit w-full flex-col gap-y-4">
-        <div className="flex h-fit w-full p-4">
+        <div className="flex h-fit w-full gap-x-4 p-4">
           {/* Question Details */}
-          <div className="flex h-fit w-full flex-[2] flex-col items-start gap-y-8 p-2">
+          <div className="flex h-fit w-full flex-[2] flex-col items-start gap-y-8">
             {/* Editor */}
             <ReactQuill
               className="w-full"
@@ -297,7 +298,7 @@ const Categorise = ({ id, isSelected }) => {
             {/* Categories List and Create Button */}
             <div className="flex flex-col gap-y-4">
               <p className="font-semibold">Categories</p>
-              {/* Draggable Options list */}
+              {/* Draggable Categories list */}
               <DragDropContext onDragEnd={handleOnCategoryDragEnd}>
                 <Droppable droppableId="droppable-list">
                   {(provided) => (
@@ -317,6 +318,7 @@ const Categorise = ({ id, isSelected }) => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
+                              tabIndex={-1}
                               style={{
                                 userSelect: "none",
                                 display: "flex",
@@ -448,6 +450,7 @@ const Categorise = ({ id, isSelected }) => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
+                              tabIndex={-1}
                               style={{
                                 userSelect: "none",
                                 display: "flex",
@@ -466,7 +469,7 @@ const Categorise = ({ id, isSelected }) => {
                                 ...provided.draggableProps.style,
                               }}
                             >
-                              <div className="flex flex-1 items-center justify-between p-1">
+                              <div className="flex flex-1 items-center justify-between gap-x-2 p-1">
                                 {/* Icon to help dragging */}
                                 <PiSquaresFour
                                   size={24}
@@ -568,17 +571,20 @@ const Categorise = ({ id, isSelected }) => {
           </div>
 
           {/* Metadata for the Question */}
-          <div className="flex flex-[1] flex-col gap-y-4 p-2">
+          <div className="flex flex-[1] flex-col gap-y-4">
             {/* Points Buttons */}
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="text-sm text-neutral-400" htmlFor="points">
+            <div className="flex items-center justify-end">
+              <div className="flex flex-col items-end">
+                <label
+                  className="pr-1 text-sm text-neutral-400"
+                  htmlFor="points"
+                >
                   Points
                 </label>
-                <Input
-                  width="6rem"
+                <input
                   name="points"
                   type="text"
+                  className="w-16 rounded-md border border-neutral-300 p-2 text-end"
                   value={`${thisQuestion.points}`}
                   onChange={(e) => handlePointsChange(e, "points")}
                 />
@@ -586,7 +592,7 @@ const Categorise = ({ id, isSelected }) => {
             </div>
             {/* Image Upload Button */}
             <div className="flex flex-grow flex-col gap-y-2">
-              <div className="flex items-center gap-x-1">
+              <div className="flex items-center justify-end gap-x-1">
                 <Button
                   onClick={() => document.getElementById("questionImg").click()}
                   className="w-fit border-none text-sky-700"
@@ -636,7 +642,7 @@ const Categorise = ({ id, isSelected }) => {
     );
 
   return (
-    <div className="flex w-full">
+    <div className="flex h-fit w-full">
       <div className="flex flex-[2] flex-col gap-y-8 p-4">
         {thisQuestion.questionText ? (
           <h1
@@ -686,6 +692,7 @@ const Categorise = ({ id, isSelected }) => {
 Categorise.propTypes = {
   id: PropTypes.string,
   isSelected: PropTypes.bool,
+  setAreEqual: PropTypes.func,
 };
 
 export default Categorise;

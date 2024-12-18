@@ -2,9 +2,21 @@ import { create } from "zustand";
 
 const useTestStore = create((set, get) => ({
   // State variables to track the questions, the selected question and selected sub question
+  id: null,
+  name: "",
+  description: "",
+  imgSrc: null,
+  img: null,
   questions: [],
+  createdBy: null,
   selectedQuestionId: null,
   selectedSubQuestionId: null,
+
+  // Function to set the name of the test
+  setTestName: (value) => set(() => ({ name: value })),
+
+  // Function to set the description of the test
+  setTestDescription: (value) => set(() => ({ description: value })),
 
   // Function to get the selected question
   getQuestionById: (id) => {
@@ -19,20 +31,13 @@ const useTestStore = create((set, get) => ({
     })),
 
   // Function to add a new question at a index
-  addQuestionAtIndex: (index, newQuestion) =>
+  addQuestionAtIndex: (index, newQuestion) => {
     set((state) => {
       const startSlice = state.questions.slice(0, index);
-      const endSlice = state.questions.slice(index + 1, state.questions.length);
-      return [...startSlice, newQuestion, ...endSlice];
-    }),
-
-  // Function to copy a question to the index below
-  copyQuestionToIndex: (index, copiedQuestion) =>
-    set((state) => {
-      const startSlice = state.questions.slice(0, index);
-      const endSlice = state.questions.slice(index + 1, length);
-      return [...startSlice, copiedQuestion, ...endSlice];
-    }),
+      const endSlice = state.questions.slice(index, state.questions.length);
+      return { questions: [...startSlice, newQuestion, ...endSlice] };
+    });
+  },
 
   // Function to update a question
   updateQuestion: (id, updatedQuestion) =>

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 const Button = ({ className, children, ...props }) => {
   const buttonStyle = twMerge(
-    "p-2 px-4 rounded-md border border-black",
+    "p-2 px-4 cursor-pointer rounded-md border border-black",
     className,
   );
   return (

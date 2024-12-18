@@ -4,13 +4,12 @@ import { FaImage } from "react-icons/fa6";
 import { MdUploadFile } from "react-icons/md";
 import PropTypes from "prop-types";
 import { isEqual } from "lodash";
-import Input from "./../Input";
 import Button from "../Button";
 import SubQuestion from "./SubQuestion";
 import { getNewSubQuestion } from "../../data";
 import useTestStore from "../../store/test.store";
 
-const Comprehension = ({ id, isSelected, questionNumber }) => {
+const Comprehension = ({ id, isSelected, questionNumber, setAreEqual }) => {
   const getQuestionById = useTestStore((state) => state.getQuestionById);
   const updateQuestion = useTestStore((state) => state.updateQuestion);
 
@@ -29,11 +28,6 @@ const Comprehension = ({ id, isSelected, questionNumber }) => {
       ...prevState,
       questionText: value, // Update only the 'content' key
     }));
-  };
-
-  // Function to handle change in points allocated to question
-  const handlePointsChange = (e, field) => {
-    setThisQuestion({ ...thisQuestion, [field]: +e.target.value });
   };
 
   // Function to add image to the question
@@ -57,6 +51,8 @@ const Comprehension = ({ id, isSelected, questionNumber }) => {
     updateQuestion(id, thisQuestion);
   };
 
+  setAreEqual(isEqual(getQuestionById(id), thisQuestion) && isValidated());
+
   // Functions for the subQuestions ------------------------------------------
 
   // Function to add new sub Question
@@ -70,9 +66,9 @@ const Comprehension = ({ id, isSelected, questionNumber }) => {
   if (isSelected)
     return (
       <div className="flex w-full flex-col gap-y-8 p-4">
-        <div className="flex h-fit w-full">
+        <div className="flex h-fit w-full gap-x-4">
           {/* Question Details */}
-          <div className="flex h-fit w-full flex-[2] flex-col items-start gap-y-4 p-2">
+          <div className="flex h-fit w-full flex-[2] flex-col items-start gap-y-4">
             {/* Editor */}
             <ReactQuill
               className="w-full"
@@ -83,25 +79,27 @@ const Comprehension = ({ id, isSelected, questionNumber }) => {
           </div>
 
           {/* Question Metadata */}
-          <div className="flex flex-[1] flex-col gap-y-4 p-2">
+          <div className="flex flex-[1] flex-col gap-y-4">
             {/* Points Buttons */}
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="text-sm text-neutral-400" htmlFor="points">
+            <div className="flex items-center justify-end">
+              <div className="flex flex-col items-end">
+                <label
+                  className="pr-1 text-sm text-neutral-400"
+                  htmlFor="points"
+                >
                   Points
                 </label>
-                <Input
-                  width="6rem"
-                  name="negPoints"
+                <input
+                  name="points"
                   type="text"
+                  className="w-16 rounded-md border border-neutral-300 p-2 text-end"
                   value={`${thisQuestion.points}`}
-                  onChange={(e) => handlePointsChange(e, "points")}
                 />
               </div>
             </div>
             {/* Image Upload Button */}
             <div className="flex flex-grow flex-col gap-y-2">
-              <div className="flex items-center gap-x-1">
+              <div className="flex items-center justify-end gap-x-1">
                 <Button
                   onClick={() => document.getElementById("questionImg").click()}
                   className="w-fit border-none text-sky-700"
@@ -140,6 +138,8 @@ const Comprehension = ({ id, isSelected, questionNumber }) => {
             <SubQuestion.SubMCQ
               id={subQuestion.id}
               parentId={id}
+              comprehension={thisQuestion}
+              setComprehension={setThisQuestion}
               isSelected={selectedSubQuestionId === subQuestion.id}
             />
           </SubQuestion>
@@ -173,13 +173,22 @@ const Comprehension = ({ id, isSelected, questionNumber }) => {
       </div>
     );
 
-  return <div>Hello, World!I am a comprehension</div>;
+  return (
+    <div className="flex h-fit w-full">
+      <div
+        className="flex-1"
+        dangerouslySetInnerHTML={{ __html: thisQuestion.questionText }}
+      ></div>
+      <div className="flex-1"></div>
+    </div>
+  );
 };
 
 Comprehension.propTypes = {
   id: PropTypes.string,
   isSelected: PropTypes.bool,
   questionNumber: PropTypes.number,
+  setAreEqual: PropTypes.func,
 };
 
 export default Comprehension;

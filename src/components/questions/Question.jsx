@@ -9,6 +9,8 @@ import Comprehension from "./Comprehension";
 import MCQ from "./MCQ";
 import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
+import React, { useState } from "react";
+import { getNewQuestion } from "../../data";
 
 const Question = ({
   id,
@@ -16,18 +18,16 @@ const Question = ({
   questionType,
   isSelected,
   children,
-  handleAddQuestionBelow,
 }) => {
   const selectQuestionId = useTestStore((state) => state.selectQuestionId);
   const resetSelection = useTestStore((state) => state.resetSelection);
   const getQuestionById = useTestStore((state) => state.getQuestionById);
   const updateQuestion = useTestStore((state) => state.updateQuestion);
   const deleteQuestion = useTestStore((state) => state.deleteQuestion);
-  const copyQuestionToIndex = useTestStore(
-    (state) => state.copyQuestionToIndex,
-  );
+  const addQuestionAtIndex = useTestStore((state) => state.addQuestionAtIndex);
 
   let thisQuestion = getQuestionById(id);
+  const [areEqual, setAreEqual] = useState(false);
 
   const options = [
     { value: "mcq", label: "MCQ" },
@@ -49,9 +49,20 @@ const Question = ({
     selectQuestionId(id);
   };
 
+  // Function to handle adding a new question below the selected question
+  const handleAddQuestionBelow = (e) => {
+    console.log("Add Question below was clicked");
+    e.stopPropagation();
+    const test = getNewQuestion();
+    console.log("Test: ", test);
+    addQuestionAtIndex(questionNumber - 1, test);
+  };
+
   // Function to handle copying the selected question into a new question below
-  const handleCopyQuestion = () => {
-    copyQuestionToIndex(questionNumber, { ...thisQuestion, id: uuidV4() });
+  const handleCopyQuestion = (e) => {
+    console.log("Copy Question below was clicked");
+    e.stopPropagation();
+    addQuestionAtIndex(questionNumber - 1, { ...thisQuestion, id: uuidV4() });
   };
 
   // Function to handle deleting the selected question
@@ -67,12 +78,12 @@ const Question = ({
     >
       {/* Selection Highlighter */}
       <div
-        className={`h-full w-2 ${isSelected ? "bg-blue-300" : "bg-white"} flex-grow-0 rounded-none rounded-l-md border border-r-0 border-neutral-300`}
+        className={`h-full w-2 ${isSelected ? "bg-blue-300" : areEqual ? "bg-green-300" : "bg-red-300"} flex-shrink-0 flex-grow-0 rounded-none rounded-l-md border border-r-0 border-neutral-300`}
       />
       {/* Question Component */}
       <div className="flex flex-grow flex-col gap-y-4 rounded-md rounded-l-none border border-l-0 border-neutral-300 p-4">
         <div className="flex w-full items-center justify-between border-b border-neutral-300">
-          <h1 className="text-xl font-semibold">{`Question ${questionNumber.toString()}`}</h1>
+          <h1 className="text-xl font-semibold">{`Question ${questionNumber}`}</h1>
           <div className="flex items-center justify-end gap-x-2 py-2">
             {isSelected && (
               <Select
@@ -87,11 +98,16 @@ const Question = ({
               />
             )}
             <Button className="border-none p-2">
-              <FaEllipsisVertical size={20} />
+              <FaEllipsisVertical className="text-neutral-400" size={20} />
             </Button>
           </div>
         </div>
-        {children}
+        {React.Children.map(children, (child) =>
+          // Ensure the child is a valid React element before cloning
+          React.isValidElement(child)
+            ? React.cloneElement(child, { setAreEqual })
+            : child,
+        )}
       </div>
 
       {/* ToolTip for Question */}
@@ -99,7 +115,7 @@ const Question = ({
         className={`${isSelected ? "visible" : "invisible"} flex h-full w-fit flex-col items-center gap-y-4 p-2`}
       >
         <Button
-          onClick={() => handleAddQuestionBelow(questionNumber)}
+          onClick={(e) => handleAddQuestionBelow(e, questionNumber)}
           className="rounded-full border-none bg-sky-700 p-2 text-white hover:bg-sky-900"
         >
           <FaPlus />

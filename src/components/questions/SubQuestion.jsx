@@ -24,6 +24,7 @@ const SubQuestion = ({
   };
 
   const handleDeleteSubQuestion = (id) => {
+    console.log("Id being deleted: ", id);
     setComprehension({
       ...comprehension,
       subQuestions: [
@@ -60,7 +61,7 @@ const SubQuestion = ({
         className={`${isSelected ? "visible" : "invisible"} flex h-full w-fit flex-col items-center gap-y-4 p-2`}
       >
         <Button
-          onClick={handleDeleteSubQuestion}
+          onClick={() => handleDeleteSubQuestion(id)}
           className="rounded-full border-none bg-sky-700 p-2 text-white hover:bg-sky-900"
         >
           <MdDelete />
@@ -77,6 +78,8 @@ SubQuestion.propTypes = {
   questionNumber: PropTypes.number,
   handleSelectSubQuestion: PropTypes.func,
   children: PropTypes.node,
+  comprehension: PropTypes.object,
+  setComprehension: PropTypes.func,
 };
 
 export default SubQuestion;

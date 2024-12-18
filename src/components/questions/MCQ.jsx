@@ -6,12 +6,11 @@ import { PiSquaresFour } from "react-icons/pi";
 import { IoClose } from "react-icons/io5";
 import { isEqual } from "lodash";
 import { v4 as uuidV4 } from "uuid";
-import Input from "./../Input";
 import Button from "../Button";
 import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
 
-const MCQ = ({ id, isSelected }) => {
+const MCQ = ({ id, isSelected, setAreEqual }) => {
   const getQuestionById = useTestStore((state) => state.getQuestionById);
   const updateQuestion = useTestStore((state) => state.updateQuestion);
 
@@ -142,12 +141,14 @@ const MCQ = ({ id, isSelected }) => {
     updateQuestion(id, thisQuestion);
   };
 
+  setAreEqual(isEqual(getQuestionById(id), thisQuestion) && isValidated());
+
   if (isSelected)
     return (
       <div className="flex h-fit w-full flex-col gap-y-4">
-        <div className="flex h-fit w-full p-4">
+        <div className="flex h-fit w-full gap-x-4 p-4">
           {/* Question Details */}
-          <div className="flex h-fit w-full flex-[2] flex-col items-start gap-y-4 p-2">
+          <div className="flex h-fit w-full flex-[2] flex-col items-start gap-y-4">
             {/* Editor */}
             <ReactQuill
               className="w-full"
@@ -156,6 +157,7 @@ const MCQ = ({ id, isSelected }) => {
               onChange={handleEditorChange}
             />
 
+            {/* Draggable Options List */}
             <div className="flex flex-col gap-y-4">
               {/* Draggable Options list */}
               <DragDropContext onDragEnd={handleOnDragEnd}>
@@ -177,6 +179,7 @@ const MCQ = ({ id, isSelected }) => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
+                              tabIndex={-1}
                               style={{
                                 userSelect: "none",
                                 display: "flex",
@@ -275,6 +278,7 @@ const MCQ = ({ id, isSelected }) => {
                     className="h-5 w-5"
                     type="radio"
                     readOnly
+                    tabIndex={-1}
                     checked={false}
                   />
                   <input
@@ -297,17 +301,20 @@ const MCQ = ({ id, isSelected }) => {
           </div>
 
           {/* Metadata for the Question */}
-          <div className="flex flex-[1] flex-col gap-y-4 p-2">
+          <div className="flex flex-[1] flex-col gap-y-4">
             {/* Points Buttons */}
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="text-sm text-neutral-400" htmlFor="points">
+            <div className="flex items-center justify-end">
+              <div className="flex flex-col items-end">
+                <label
+                  className="pr-1 text-sm text-neutral-400"
+                  htmlFor="points"
+                >
                   Points
                 </label>
-                <Input
-                  width="6rem"
-                  name="negPoints"
+                <input
+                  name="points"
                   type="text"
+                  className="w-16 rounded-md border border-neutral-300 p-2 text-end"
                   value={`${thisQuestion.points}`}
                   onChange={(e) => handlePointsChange(e, "points")}
                 />
@@ -315,7 +322,7 @@ const MCQ = ({ id, isSelected }) => {
             </div>
             {/* Image Upload Button */}
             <div className="flex flex-grow flex-col gap-y-2">
-              <div className="flex items-center gap-x-1">
+              <div className="flex items-center justify-end gap-x-1">
                 <Button
                   onClick={() => document.getElementById("questionImg").click()}
                   className="w-fit border-none text-sky-700"
@@ -358,8 +365,9 @@ const MCQ = ({ id, isSelected }) => {
     );
 
   return (
-    <div className="flex h-96 w-full p-4">
+    <div className="flex h-fit w-full p-4">
       <div className="flex h-full flex-[2] flex-col gap-y-8">
+        {/* Test for the Question */}
         {thisQuestion.questionText ? (
           <h1
             className="text-xl font-semibold"
@@ -370,6 +378,8 @@ const MCQ = ({ id, isSelected }) => {
             Enter the Text for the Question
           </h1>
         )}
+
+        {/* Options for the Question */}
         {thisQuestion.options?.map((option, index) => (
           <div className="flex items-center gap-x-2 pl-4" key={option.id}>
             <input
@@ -384,15 +394,17 @@ const MCQ = ({ id, isSelected }) => {
       </div>
       <div className="flex h-full flex-[1] flex-col gap-y-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-x-2 rounded-md border border-neutral-300 p-2">
-            <span>Points: </span>
-            <span>{thisQuestion.points}</span>
+          <div className="flex w-full items-center justify-end gap-x-2">
+            <div className="rounded-md border border-neutral-300 p-2">
+              <span>Points: </span>
+              <span>{thisQuestion.points}</span>
+            </div>
           </div>
         </div>
         {thisQuestion.questionImg && (
           <div className="w-full">
             <img
-              className="rounded-md object-cover"
+              className="rounded-md bg-red-300 object-cover"
               src={URL.createObjectURL(thisQuestion.questionImg)}
               alt=""
             />
@@ -406,6 +418,7 @@ const MCQ = ({ id, isSelected }) => {
 MCQ.propTypes = {
   id: PropTypes.string,
   isSelected: PropTypes.bool,
+  setAreEqual: PropTypes.func,
 };
 
 export default MCQ;

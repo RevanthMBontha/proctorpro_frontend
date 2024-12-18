@@ -11,7 +11,24 @@ import Button from "../Button";
 import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
 
-const SubMCQ = ({ id, parentId, isSelected }) => {
+const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
+  const selectedQuestionId = useTestStore((state) => state.selectedQuestionId);
+  const selectedSubQuestionId = useTestStore(
+    (state) => state.selectedSubQuestionId,
+  );
+
+  console.log("Selected Question ID: ", selectedQuestionId);
+  console.log("Selected Sub Question ID: ", selectedSubQuestionId);
+
+  const inputRefs = useRef([]);
+
+  console.log("ID in subMCQ is: ", id);
+  console.log("Comprehension in subMCQ: ", comprehension);
+
+  const [thisQuestion, setThisQuestion] = useState(
+    comprehension.subQuestions?.find((subQuestion) => subQuestion.id === id),
+  );
+
   // Function to handle drag end
   const handleOnDragEnd = (result) => {
     const { source, destination } = result;
@@ -131,17 +148,17 @@ const SubMCQ = ({ id, parentId, isSelected }) => {
 
   // Function to update the Question in Store
   const handleUpdateQuestion = () => {
-    const thisIndex = thisParentQuestion.subQuestions.find(
+    const thisIndex = comprehension.subQuestions.findIndex(
       (subQuestion) => subQuestion.id === id,
     );
 
-    const startSlice = thisParentQuestion.subQuestions.slice(0, thisIndex);
-    const endSlice = thisParentQuestion.subQuestions.slice(
+    const startSlice = comprehension.subQuestions.slice(0, thisIndex);
+    const endSlice = comprehension.subQuestions.slice(
       thisIndex + 1,
-      thisParentQuestion.subQuestions.length,
+      comprehension.subQuestions.length,
     );
-    setThisParentQuestion({
-      ...thisParentQuestion,
+    setComprehension({
+      ...comprehension,
       subQuestions: [...startSlice, { ...thisQuestion }, ...endSlice],
     });
   };
@@ -350,7 +367,7 @@ const SubMCQ = ({ id, parentId, isSelected }) => {
             <Button
               disabled={
                 isEqual(
-                  thisParentQuestion.subQuestions.find(
+                  comprehension.subQuestions.find(
                     (subQuestion) => subQuestion.id === id,
                   ),
                   thisQuestion,
@@ -416,6 +433,8 @@ SubMCQ.propTypes = {
   id: PropTypes.string,
   parentId: PropTypes.string,
   isSelected: PropTypes.bool,
+  comprehension: PropTypes.object,
+  setComprehension: PropTypes.func,
 };
 
 export default SubMCQ;

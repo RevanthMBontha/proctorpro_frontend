@@ -23,7 +23,7 @@ const Home = () => {
       </div>
 
       {/* Search functionality for Tests */}
-      <div>
+      <div className="w-[450px]">
         <Input icon={<FiSearch />} placeholder="Search for a test" />
       </div>
 

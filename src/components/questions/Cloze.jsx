@@ -6,7 +6,6 @@ import { PiSquaresFour } from "react-icons/pi";
 import { IoClose } from "react-icons/io5";
 import { isEqual } from "lodash";
 import { v4 as uuidV4 } from "uuid";
-import Input from "./../Input";
 import Button from "../Button";
 import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
@@ -14,7 +13,7 @@ import PropTypes from "prop-types";
 const blankPattern = /<u>([a-zA-Z0-9]+)<\/u>/g;
 const paraPattern = /<\/?p>/g;
 
-const Cloze = ({ id, isSelected }) => {
+const Cloze = ({ id, isSelected, setAreEqual }) => {
   const getQuestionById = useTestStore((state) => state.getQuestionById);
   const updateQuestion = useTestStore((state) => state.updateQuestion);
 
@@ -147,12 +146,14 @@ const Cloze = ({ id, isSelected }) => {
     updateQuestion(id, thisQuestion);
   };
 
+  setAreEqual(isEqual(getQuestionById(id), thisQuestion) && isValidated());
+
   if (isSelected)
     return (
       <div className="flex h-fit w-full flex-col gap-y-4">
-        <div className="flex h-fit w-full p-4">
+        <div className="flex h-fit w-full gap-x-4 p-4">
           {/* Question Details */}
-          <div className="flex h-fit w-full flex-[2] flex-col items-start gap-y-4 p-2">
+          <div className="flex h-fit w-full flex-[2] flex-col items-start gap-y-4">
             <div className="w-full">
               <p>Preview</p>
               <input
@@ -324,37 +325,28 @@ const Cloze = ({ id, isSelected }) => {
           </div>
 
           {/* Metadata for the Question */}
-          <div className="flex flex-[1] flex-col gap-y-4 p-2">
+          <div className="flex flex-[1] flex-col gap-y-4">
             {/* Points Buttons */}
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="text-sm text-neutral-400" htmlFor="points">
+            <div className="flex items-center justify-end">
+              <div className="flex flex-col items-end">
+                <label
+                  className="pr-1 text-sm text-neutral-400"
+                  htmlFor="points"
+                >
                   Points
                 </label>
-                <Input
-                  width="6rem"
-                  name="negPoints"
+                <input
+                  name="points"
                   type="text"
+                  className="w-16 rounded-md border border-neutral-300 p-2 text-end"
                   value={`${thisQuestion.points}`}
                   onChange={(e) => handlePointsChange(e, "points")}
-                />
-              </div>
-              <div>
-                <label className="text-sm text-neutral-400" htmlFor="points">
-                  Negative Points
-                </label>
-                <Input
-                  width="6rem"
-                  name="negPoints"
-                  type="text"
-                  value={`${thisQuestion.negPoints}`}
-                  onChange={(e) => handlePointsChange(e, "negPoints")}
                 />
               </div>
             </div>
             {/* Image Upload Button */}
             <div className="flex flex-grow flex-col gap-y-2">
-              <div className="flex items-center gap-x-1">
+              <div className="flex items-center justify-end gap-x-1">
                 <Button
                   onClick={() => document.getElementById("questionImg").click()}
                   className="w-fit border-none text-sky-700"
@@ -402,6 +394,7 @@ const Cloze = ({ id, isSelected }) => {
 Cloze.propTypes = {
   id: PropTypes.string,
   isSelected: PropTypes.bool,
+  setAreEqual: PropTypes.func,
 };
 
 export default Cloze;
