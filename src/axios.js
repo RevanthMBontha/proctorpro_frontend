@@ -4,7 +4,7 @@ import axios from "axios";
 const token = localStorage.getItem("token");
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api/v1", // Your API's base URL
+  baseURL: "https://proctorpro-backend.onrender.com/api/v1", // Your API's base URL
   headers: {
     Authorization: `Bearer ${token}`,
   },
