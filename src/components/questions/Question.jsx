@@ -1,5 +1,5 @@
-import { v4 as uuidV4 } from "uuid";
-import { FaEllipsisVertical, FaPlus, FaRegCopy } from "react-icons/fa6";
+import { FaEllipsisVertical } from "react-icons/fa6";
+// import { FaPlus, FaRegCopy } from "react-icons/fa6";
 import { MdDelete } from "react-icons/md";
 import Select from "react-select";
 import Button from "../Button";
@@ -7,27 +7,39 @@ import Categorise from "./Categorise";
 import Cloze from "./Cloze";
 import Comprehension from "./Comprehension";
 import MCQ from "./MCQ";
-import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
-import React, { useState } from "react";
-import { getNewQuestion } from "../../data";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import Loading from "../Loading";
+import api from "../../axios";
 
-const Question = ({
-  id,
-  questionNumber,
-  questionType,
-  isSelected,
-  children,
-}) => {
-  const selectQuestionId = useTestStore((state) => state.selectQuestionId);
-  const resetSelection = useTestStore((state) => state.resetSelection);
-  const getQuestionById = useTestStore((state) => state.getQuestionById);
-  const updateQuestion = useTestStore((state) => state.updateQuestion);
-  const deleteQuestion = useTestStore((state) => state.deleteQuestion);
-  const addQuestionAtIndex = useTestStore((state) => state.addQuestionAtIndex);
-
-  let thisQuestion = getQuestionById(id);
+const Question = ({ id, questionNumber, isSelected, setSelected }) => {
   const [areEqual, setAreEqual] = useState(false);
+  const [thisQuestion, setThisQuestion] = useState({
+    type: "mcq",
+    questionText: "",
+    options: [],
+    correctAnswer: "",
+    clozeText: "",
+    subQuestions: [],
+    categories: [],
+    items: [],
+  });
+
+  // Get the data of the question
+  const { isLoading, isError, data, error } = useQuery({
+    queryKey: ["questions", `${id}`],
+    queryFn: async () => {
+      const response = await api.get(`/questions/${id}`);
+      return response.data;
+    },
+  });
+
+  useEffect(() => {
+    if (data) {
+      setThisQuestion(data.question);
+    }
+  }, [data]);
 
   const options = [
     { value: "mcq", label: "MCQ" },
@@ -38,42 +50,39 @@ const Question = ({
 
   // Function to handle changing the type of question
   const handleQuestionTypeChange = (option) => {
-    updateQuestion(id, {
-      ...thisQuestion,
-      questionType: option.value,
-    });
-  };
-
-  // Function to handle question selection
-  const handleSelectQuestionId = () => {
-    selectQuestionId(id);
+    setThisQuestion({ ...thisQuestion, type: option.value });
   };
 
   // Function to handle adding a new question below the selected question
-  const handleAddQuestionBelow = (e) => {
-    console.log("Add Question below was clicked");
-    e.stopPropagation();
-    const test = getNewQuestion();
-    console.log("Test: ", test);
-    addQuestionAtIndex(questionNumber - 1, test);
-  };
+  // const handleAddQuestionBelow = (e) => {
+  //   console.log("Add Question below was clicked");
+  //   e.stopPropagation();
+  //   const test = getNewQuestion();
+  //   console.log("Test: ", test);
+  //   // TODO: Add logic to insert at a particular position
+  // };
 
   // Function to handle copying the selected question into a new question below
-  const handleCopyQuestion = (e) => {
-    console.log("Copy Question below was clicked");
-    e.stopPropagation();
-    addQuestionAtIndex(questionNumber - 1, { ...thisQuestion, id: uuidV4() });
-  };
+  // const handleCopyQuestion = (e) => {
+  //   console.log("Copy Question below was clicked");
+  //   e.stopPropagation();
+  //   // TODO: Add logic to copy to next index
+  // };
 
   // Function to handle deleting the selected question
   const handleDeleteQuestion = () => {
-    resetSelection(); //Reset the selection
-    deleteQuestion(id); //Delete the question
+    setSelected(null);
+    // TODO: Add logic to delete the question
   };
+
+  if (isLoading) return <Loading />;
+
+  if (isError) console.log(error);
+  if (isError) return <div>Something went wrong! Check the console.</div>;
 
   return (
     <div
-      onClick={handleSelectQuestionId}
+      onClick={() => setSelected(id)}
       className="flex w-full flex-grow cursor-pointer"
     >
       {/* Selection Highlighter */}
@@ -91,7 +100,7 @@ const Question = ({
                 className="w-64"
                 options={options}
                 defaultValue={options.find(
-                  (option) => option.value === questionType,
+                  (option) => option.value === thisQuestion.type,
                 )}
                 placeholder="Select a Question type"
                 onChange={handleQuestionTypeChange}
@@ -102,11 +111,46 @@ const Question = ({
             </Button>
           </div>
         </div>
-        {React.Children.map(children, (child) =>
-          // Ensure the child is a valid React element before cloning
-          React.isValidElement(child)
-            ? React.cloneElement(child, { setAreEqual })
-            : child,
+        {thisQuestion.type === "mcq" && (
+          <MCQ
+            id={thisQuestion._id}
+            isSelected={isSelected}
+            thisQuestion={thisQuestion}
+            setThisQuestion={setThisQuestion}
+            setAreEqual={setAreEqual}
+            data={data}
+          />
+        )}
+        {thisQuestion.type === "categorise" && (
+          <Categorise
+            id={thisQuestion._id}
+            isSelected={isSelected}
+            thisQuestion={thisQuestion}
+            setThisQuestion={setThisQuestion}
+            setAreEqual={setAreEqual}
+            data={data}
+          />
+        )}
+        {thisQuestion.type === "cloze" && (
+          <Cloze
+            id={thisQuestion._id}
+            isSelected={isSelected}
+            thisQuestion={thisQuestion}
+            setThisQuestion={setThisQuestion}
+            setAreEqual={setAreEqual}
+            data={data}
+          />
+        )}
+        {thisQuestion.type === "comprehension" && (
+          <Comprehension
+            id={thisQuestion._id}
+            questionNumber={questionNumber}
+            isSelected={isSelected}
+            thisQuestion={thisQuestion}
+            setThisQuestion={setThisQuestion}
+            setAreEqual={setAreEqual}
+            data={data}
+          />
         )}
       </div>
 
@@ -114,18 +158,18 @@ const Question = ({
       <div
         className={`${isSelected ? "visible" : "invisible"} flex h-full w-fit flex-col items-center gap-y-4 p-2`}
       >
-        <Button
+        {/* <Button
           onClick={(e) => handleAddQuestionBelow(e, questionNumber)}
           className="rounded-full border-none bg-sky-700 p-2 text-white hover:bg-sky-900"
         >
           <FaPlus />
-        </Button>
-        <Button
+        </Button> */}
+        {/* <Button
           onClick={handleCopyQuestion}
           className="rounded-full border-none bg-sky-700 p-2 text-white hover:bg-sky-900"
         >
           <FaRegCopy />
-        </Button>
+        </Button> */}
         <Button
           onClick={handleDeleteQuestion}
           className="rounded-full border-none bg-sky-700 p-2 text-white hover:bg-sky-900"
@@ -140,15 +184,10 @@ const Question = ({
 Question.propTypes = {
   id: PropTypes.string,
   questionNumber: PropTypes.number,
-  questionType: PropTypes.string,
   isSelected: PropTypes.bool,
   children: PropTypes.node,
   handleAddQuestionBelow: PropTypes.func,
+  setSelected: PropTypes.func,
 };
 
 export default Question;
-
-Question.MCQ = MCQ;
-Question.Categorise = Categorise;
-Question.Cloze = Cloze;
-Question.Comprehension = Comprehension;

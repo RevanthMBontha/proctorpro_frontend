@@ -6,7 +6,7 @@ import { FaUser } from "react-icons/fa6";
 import { Link } from "react-router";
 
 const Navbar = () => {
-  const [isActive, setIsActive] = useState("home");
+  const [isActive, setIsActive] = useState("");
   return (
     <div className="flex h-full w-72 flex-grow-0 flex-col items-center justify-start gap-y-4 bg-sky-950 text-white transition-all duration-300">
       {/* Logo for the App */}

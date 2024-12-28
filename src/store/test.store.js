@@ -3,7 +3,7 @@ import { create } from "zustand";
 const useTestStore = create((set, get) => ({
   // State variables to track the questions, the selected question and selected sub question
   id: null,
-  name: "",
+  title: "",
   description: "",
   testImgSrc: null,
   testImg: null,
@@ -12,8 +12,8 @@ const useTestStore = create((set, get) => ({
   selectedQuestionId: null,
   selectedSubQuestionId: null,
 
-  // Function to set the name of the test
-  setTestName: (value) => set(() => ({ name: value })),
+  // Function to set the title of the test
+  setTesttitle: (value) => set(() => ({ title: value })),
 
   // Function to set the description of the test
   setTestDescription: (value) => set(() => ({ description: value })),

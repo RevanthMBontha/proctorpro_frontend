@@ -1,12 +1,13 @@
 import { FaRegImage, FaEye, FaEllipsisVertical } from "react-icons/fa6";
 import Button from "./Button";
-import useTestStore from "../store/test.store";
+import PropTypes from "prop-types";
+import { useNavigate } from "react-router";
 
-const TestControls = () => {
-  const setTestImg = useTestStore((state) => state.setTestImg);
+const TestControls = ({ setImageSelected, testId }) => {
+  const navigate = useNavigate();
 
   const handleImgChange = (e) => {
-    setTestImg(e.target.files[0]);
+    setImageSelected(e.target.files[0]);
   };
 
   return (
@@ -22,8 +23,12 @@ const TestControls = () => {
         id="testImg"
         className="hidden"
         type="file"
+        accept="image/*"
       />
-      <Button className="aspect-square border-none p-2">
+      <Button
+        onClick={() => navigate(`/attempt/${testId}`)}
+        className="aspect-square border-none p-2"
+      >
         <FaEye className="text-white" size={24} />
       </Button>
       <Button className="aspect-square border-none p-2">
@@ -31,6 +36,11 @@ const TestControls = () => {
       </Button>
     </div>
   );
+};
+
+TestControls.propTypes = {
+  setImageSelected: PropTypes.func,
+  testId: PropTypes.string,
 };
 
 export default TestControls;

@@ -1,14 +1,11 @@
 import { Navigate, Outlet } from "react-router";
 
 const IsAuthRoute = () => {
-  const checkVerification = () => {
-    const user = JSON.parse(localStorage.getItem("user"));
+  let isAuthorized = false;
 
-    if (user) return true;
-    else return false;
-  };
+  if (Date.now() < parseInt(localStorage.getItem("exp"))) isAuthorized = true;
 
-  if (checkVerification()) return <Outlet />;
+  if (isAuthorized) return <Outlet />;
   else return <Navigate to={"/authenticate"} />;
 };
 

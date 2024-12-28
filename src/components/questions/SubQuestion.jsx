@@ -1,39 +1,47 @@
+import { useState } from "react";
 import PropTypes from "prop-types";
 import { FaEllipsisVertical } from "react-icons/fa6";
 import { MdDelete } from "react-icons/md";
 import Button from "../Button";
 import SubMCQ from "./SubMCQ";
-import useTestStore from "../../store/test.store";
 
 const SubQuestion = ({
   id,
+  parentId,
   isSelected,
   parentQuestionNumber,
   questionNumber,
-  comprehension,
-  setComprehension,
-  children,
+  setSelected,
+  data,
 }) => {
-  const selectSubQuestionId = useTestStore(
-    (state) => state.selectSubQuestionId,
-  );
+  const [thisQuestion, setThisQuestion] = useState({
+    type: "mcq",
+    questionText: "",
+    options: [],
+    correctAnswer: "",
+    clozeText: "",
+    subQuestions: [],
+    categories: [],
+    items: [],
+    points: 0,
+  });
 
   const handleSelectSubQuestionId = (evt) => {
     evt.stopPropagation();
-    selectSubQuestionId(id);
+    setSelected(id);
   };
 
-  const handleDeleteSubQuestion = (id) => {
-    console.log("Id being deleted: ", id);
-    setComprehension({
-      ...comprehension,
-      subQuestions: [
-        ...comprehension.subQuestions.filter(
-          (subQuestion) => subQuestion.id !== id,
-        ),
-      ],
-    });
-  };
+  // const handleDeleteSubQuestion = (id) => {
+  //   // TODO: Add logic for deleting subquestion
+  //   // setComprehension({
+  //   //   ...comprehension,
+  //   //   subQuestions: [
+  //   //     ...comprehension.subQuestions.filter(
+  //   //       (subQuestion) => subQuestion.id !== id,
+  //   //     ),
+  //   //   ],
+  //   // });
+  // };
 
   return (
     <div
@@ -54,14 +62,21 @@ const SubQuestion = ({
             </Button>
           </div>
         </div>
-        {children}
+        <SubMCQ
+          id={id}
+          parentId={parentId}
+          thisQuestion={thisQuestion}
+          setThisQuestion={setThisQuestion}
+          isSelected={isSelected}
+          data={data}
+        />
       </div>
       {/* ToolTip for Question */}
       <div
         className={`${isSelected ? "visible" : "invisible"} flex h-full w-fit flex-col items-center gap-y-4 p-2`}
       >
         <Button
-          onClick={() => handleDeleteSubQuestion(id)}
+          // onClick={() => handleDeleteSubQuestion(id)}
           className="rounded-full border-none bg-sky-700 p-2 text-white hover:bg-sky-900"
         >
           <MdDelete />
@@ -73,15 +88,14 @@ const SubQuestion = ({
 
 SubQuestion.propTypes = {
   id: PropTypes.string,
+  parentId: PropTypes.string,
   isSelected: PropTypes.bool,
   parentQuestionNumber: PropTypes.number,
   questionNumber: PropTypes.number,
   handleSelectSubQuestion: PropTypes.func,
   children: PropTypes.node,
-  comprehension: PropTypes.object,
-  setComprehension: PropTypes.func,
+  setSelected: PropTypes.func,
+  data: PropTypes.object,
 };
 
 export default SubQuestion;
-
-SubQuestion.SubMCQ = SubMCQ;

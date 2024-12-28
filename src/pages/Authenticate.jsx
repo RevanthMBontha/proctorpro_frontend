@@ -1,18 +1,18 @@
 import { FaGraduationCap, FaGoogle } from "react-icons/fa6";
 import { auth, provider, signInWithPopup } from "./../firebase.js";
 import { useNavigate } from "react-router";
+import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { BASE_URL } from "../api-routes.js";
 
 const Authenticate = () => {
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    try {
+  const loginMutation = useMutation({
+    mutationFn: async () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      console.log(user);
-
-      const thisUser = {
+      const userDetails = {
         id: user.uid,
         firstName: user.displayName.split(" ")[0],
         lastName: user.displayName.split(" ")[1],
@@ -20,34 +20,18 @@ const Authenticate = () => {
         tests: [],
       };
 
-      //   Store in localstorage
-      localStorage.setItem("user", JSON.stringify(thisUser));
+      const response = await axios.post(`${BASE_URL}/auth/login`, userDetails);
 
-      //   Navigate to home
-      navigate("/test-admin");
-
-      //   // Send user data to the server
-      //   const response = await axios.post("http://localhost:5000/api/users", {
-      //     uid: user.uid,
-      //     email: user.email,
-      //     name: user.displayName,
-      //   });
-
-      //   console.log("User saved:", response.data);
-    } catch (error) {
-      console.error("Error during Google login:", error);
-      if (error.response) {
-        // Server responded with a status code outside 2xx
-        console.error("Server error:", error.response.data);
-      } else if (error.request) {
-        // No response received
-        console.error("No response from server:", error.request);
-      } else {
-        // Something else caused the error
-        console.error("Error:", error.message);
-      }
-    }
-  };
+      // Add the user and the token to localstorage
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("iat", response.data.issuedAt);
+      localStorage.setItem("exp", response.data.expiresIn);
+    },
+    onSuccess: () => {
+      navigate(-1);
+    },
+  });
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-black">
@@ -57,7 +41,7 @@ const Authenticate = () => {
           <span className="text-7xl font-semibold">ProctorPro</span>
         </div>
         <div
-          onClick={handleLogin}
+          onClick={loginMutation.mutate}
           className="flex cursor-pointer items-center justify-center gap-x-4 rounded-full bg-black p-4 px-8"
         >
           <span className="rounded-full bg-white p-2">

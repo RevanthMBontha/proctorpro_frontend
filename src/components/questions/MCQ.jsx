@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import ReactQuill from "react-quill";
 import { Draggable, Droppable, DragDropContext } from "@hello-pangea/dnd";
 import { FaImage } from "react-icons/fa6";
@@ -7,17 +7,52 @@ import { IoClose } from "react-icons/io5";
 import { isEqual } from "lodash";
 import { v4 as uuidV4 } from "uuid";
 import Button from "../Button";
-import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../../axios";
 
-const MCQ = ({ id, isSelected, setAreEqual }) => {
-  const getQuestionById = useTestStore((state) => state.getQuestionById);
-  const updateQuestion = useTestStore((state) => state.updateQuestion);
-
+const MCQ = ({
+  id,
+  isSelected,
+  thisQuestion,
+  setThisQuestion,
+  setAreEqual,
+  data,
+}) => {
   const inputRefs = useRef([]);
+  const queryClient = useQueryClient();
 
-  const temp = getQuestionById(id);
-  const [thisQuestion, setThisQuestion] = useState({ ...temp });
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const formData = new FormData();
+      formData.append("type", JSON.stringify(thisQuestion.type));
+      formData.append(
+        "questionText",
+        JSON.stringify(thisQuestion.questionText),
+      );
+      formData.append("options", JSON.stringify(thisQuestion.options));
+      formData.append(
+        "correctAnswer",
+        JSON.stringify(thisQuestion.correctAnswer),
+      );
+      formData.append("points", JSON.stringify(thisQuestion.points));
+      formData.append("clozeText", JSON.stringify(thisQuestion.clozeText));
+      formData.append(
+        "subQuestions",
+        JSON.stringify(thisQuestion.subQuestions),
+      );
+      formData.append("categories", JSON.stringify(thisQuestion.categories));
+      formData.append("items", JSON.stringify(thisQuestion.items));
+
+      formData.append("file", thisQuestion.questionImg);
+
+      const response = await api.patch(`/questions/${id}`, formData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["questions", `${data.question._id}`]);
+    },
+  });
 
   // Function to handle drag end
   const handleOnDragEnd = (result) => {
@@ -126,7 +161,7 @@ const MCQ = ({ id, isSelected, setAreEqual }) => {
   };
 
   // Function to check if all necessary inputs are filled or not
-  const isValidated = () => {
+  const isValidated = useCallback(() => {
     // Empty Question Text case
     if (!thisQuestion.questionText) return false;
 
@@ -134,14 +169,11 @@ const MCQ = ({ id, isSelected, setAreEqual }) => {
     if (!thisQuestion.correctAnswer) return false;
 
     return true;
-  };
+  }, [thisQuestion.questionText, thisQuestion.correctAnswer]);
 
-  // Function to update the Question in Store
-  const handleUpdateStore = () => {
-    updateQuestion(id, thisQuestion);
-  };
-
-  setAreEqual(isEqual(getQuestionById(id), thisQuestion) && isValidated());
+  useEffect(() => {
+    setAreEqual(isEqual(data.question, thisQuestion) && isValidated());
+  }, [data, thisQuestion, setAreEqual, isValidated]);
 
   if (isSelected)
     return (
@@ -336,12 +368,21 @@ const MCQ = ({ id, isSelected, setAreEqual }) => {
                   onChange={handleImageChange}
                 />
               </div>
-              {thisQuestion.questionImg && (
+              {thisQuestion.questionImg &&
+              typeof thisQuestion.questionImg === "string" ? (
                 <img
-                  className="h-full w-full rounded-md object-cover"
-                  src={URL.createObjectURL(thisQuestion.questionImg)}
+                  className="h-fit w-full rounded-md object-cover"
+                  src={thisQuestion.questionImg}
                   alt={thisQuestion.questionText}
                 />
+              ) : (
+                thisQuestion.questionImg && (
+                  <img
+                    className="h-fit w-full rounded-md object-cover"
+                    src={URL.createObjectURL(thisQuestion.questionImg)}
+                    alt={thisQuestion.questionText}
+                  />
+                )
               )}
             </div>
           </div>
@@ -351,10 +392,8 @@ const MCQ = ({ id, isSelected, setAreEqual }) => {
         {isSelected && (
           <div className="flex w-full justify-end">
             <Button
-              disabled={
-                isEqual(getQuestionById(id), thisQuestion) || !isValidated()
-              }
-              onClick={handleUpdateStore}
+              disabled={isEqual(data.question, thisQuestion) || !isValidated()}
+              onClick={updateMutation.mutate}
               className="border-none bg-sky-500 text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-neutral-500"
             >
               Save Question Details
@@ -392,6 +431,8 @@ const MCQ = ({ id, isSelected, setAreEqual }) => {
           </div>
         ))}
       </div>
+
+      {/* Points */}
       <div className="flex h-full flex-[1] flex-col gap-y-8">
         <div className="flex items-center justify-between">
           <div className="flex w-full items-center justify-end gap-x-2">
@@ -401,14 +442,21 @@ const MCQ = ({ id, isSelected, setAreEqual }) => {
             </div>
           </div>
         </div>
-        {thisQuestion.questionImg && (
-          <div className="w-full">
+        {thisQuestion.questionImg &&
+        typeof thisQuestion.questionImg === "string" ? (
+          <img
+            className="h-fit w-full rounded-md object-cover"
+            src={thisQuestion.questionImg}
+            alt={thisQuestion.questionText}
+          />
+        ) : (
+          thisQuestion.questionImg && (
             <img
-              className="rounded-md bg-red-300 object-cover"
+              className="h-fit w-full rounded-md object-cover"
               src={URL.createObjectURL(thisQuestion.questionImg)}
-              alt=""
+              alt={thisQuestion.questionText}
             />
-          </div>
+          )
         )}
       </div>
     </div>
@@ -418,7 +466,10 @@ const MCQ = ({ id, isSelected, setAreEqual }) => {
 MCQ.propTypes = {
   id: PropTypes.string,
   isSelected: PropTypes.bool,
+  thisQuestion: PropTypes.object,
+  setThisQuestion: PropTypes.func,
   setAreEqual: PropTypes.func,
+  data: PropTypes.object,
 };
 
 export default MCQ;

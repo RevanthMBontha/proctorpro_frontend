@@ -31,7 +31,7 @@ const Header = () => {
           onClick={() => setIsDropDownOpen(!isDropdownOpen)}
           className="flex h-full items-center gap-x-2 rounded-none border border-b-0 border-r-0 border-t-0 border-neutral-300 bg-white"
         >
-          Hey, {user.firstName} 👋 <FaAngleDown />
+          Hey, {user?.firstName} 👋 <FaAngleDown />
         </Button>
         <DropDown identifier="header-dropdown" isOpen={isDropdownOpen}>
           <div className="flex w-36 flex-col">

@@ -1,33 +1,73 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import ReactQuill from "react-quill";
 import { Draggable, Droppable, DragDropContext } from "@hello-pangea/dnd";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../../axios";
+import { v4 as uuidV4 } from "uuid";
 import { FaImage } from "react-icons/fa6";
 import { PiSquaresFour } from "react-icons/pi";
 import { IoClose } from "react-icons/io5";
 import { isEqual } from "lodash";
-import { v4 as uuidV4 } from "uuid";
 import Input from "./../Input";
 import Button from "../Button";
-import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
 
-const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
-  const selectedQuestionId = useTestStore((state) => state.selectedQuestionId);
-  const selectedSubQuestionId = useTestStore(
-    (state) => state.selectedSubQuestionId,
-  );
-
-  console.log("Selected Question ID: ", selectedQuestionId);
-  console.log("Selected Sub Question ID: ", selectedSubQuestionId);
-
+const SubMCQ = ({
+  id,
+  parentId,
+  thisQuestion,
+  setThisQuestion,
+  data,
+  isSelected,
+}) => {
   const inputRefs = useRef([]);
+  const queryClient = useQueryClient();
 
-  console.log("ID in subMCQ is: ", id);
-  console.log("Comprehension in subMCQ: ", comprehension);
+  useEffect(() => {
+    if (data) {
+      setThisQuestion(
+        data.question.subQuestions.find((question) => question._id === id),
+      );
+    }
+  }, [id, setThisQuestion, data]);
 
-  const [thisQuestion, setThisQuestion] = useState(
-    comprehension.subQuestions?.find((subQuestion) => subQuestion.id === id),
-  );
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const formData = new FormData();
+      formData.append("type", JSON.stringify(thisQuestion.type));
+      formData.append(
+        "questionText",
+        JSON.stringify(thisQuestion.questionText),
+      );
+      formData.append("options", JSON.stringify(thisQuestion.options));
+      formData.append(
+        "correctAnswer",
+        JSON.stringify(thisQuestion.correctAnswer),
+      );
+      formData.append("points", JSON.stringify(thisQuestion.points));
+      formData.append("clozeText", JSON.stringify(thisQuestion.clozeText));
+      formData.append(
+        "subQuestions",
+        JSON.stringify(thisQuestion.subQuestions),
+      );
+      formData.append("categories", JSON.stringify(thisQuestion.categories));
+      formData.append("items", JSON.stringify(thisQuestion.items));
+
+      formData.append("file", thisQuestion.questionImg);
+
+      const response = await api.patch(
+        `/questions/${parentId}/${id}`,
+        formData,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        "questions",
+        `${data.question._id}/${id}`,
+      ]);
+    },
+  });
 
   // Function to handle drag end
   const handleOnDragEnd = (result) => {
@@ -37,7 +77,7 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
     if (!destination) return;
 
     // Reorder options in the list
-    const reorderedItems = Array.from(thisQuestion.options);
+    const reorderedItems = Array.from(thisQuestion?.options);
     const [movedItem] = reorderedItems.splice(source.index, 1);
     reorderedItems.splice(destination.index, 0, movedItem);
     setThisQuestion({ ...thisQuestion, options: reorderedItems });
@@ -53,6 +93,7 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
 
   // Function to add image to the question
   const handleImageChange = (e) => {
+    e.stopPropagation();
     setThisQuestion({
       ...thisQuestion,
       questionImg: e.target.files[0],
@@ -86,24 +127,24 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
 
     // Focus the new input field after adding it
     setTimeout(() => {
-      inputRefs.current[thisQuestion.options.length]?.focus();
+      inputRefs.current[thisQuestion?.options.length]?.focus();
     }, 0);
   };
 
   // Function to edit an Option in place
   const handleOptionEdit = (e, id, value) => {
-    const thisOption = thisQuestion.options.find((option) => option.id === id);
-    const thisOptionIndex = thisQuestion.options.findIndex(
+    const thisOption = thisQuestion?.options.find((option) => option.id === id);
+    const thisOptionIndex = thisQuestion?.options.findIndex(
       (option) => option.id === id,
     );
 
-    const startOptions = thisQuestion.options.slice(0, thisOptionIndex);
-    const endOptions = thisQuestion.options.slice(
+    const startOptions = thisQuestion?.options.slice(0, thisOptionIndex);
+    const endOptions = thisQuestion?.options.slice(
       thisOptionIndex + 1,
-      thisQuestion.options.length,
+      thisQuestion?.options.length,
     );
 
-    if (value === thisQuestion.correctAnswer) {
+    if (value === thisQuestion?.correctAnswer) {
       setThisQuestion({
         ...thisQuestion,
         correctAnswer: e.target.value,
@@ -138,29 +179,12 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
   // Function to check if all necessary inputs are filled or not
   const isValidated = () => {
     // Empty Question Text case
-    if (!thisQuestion.questionText) return false;
+    if (!thisQuestion?.questionText) return false;
 
     // No correct answer selected for the question
-    if (!thisQuestion.correctAnswer) return false;
+    if (!thisQuestion?.correctAnswer) return false;
 
     return true;
-  };
-
-  // Function to update the Question in Store
-  const handleUpdateQuestion = () => {
-    const thisIndex = comprehension.subQuestions.findIndex(
-      (subQuestion) => subQuestion.id === id,
-    );
-
-    const startSlice = comprehension.subQuestions.slice(0, thisIndex);
-    const endSlice = comprehension.subQuestions.slice(
-      thisIndex + 1,
-      comprehension.subQuestions.length,
-    );
-    setComprehension({
-      ...comprehension,
-      subQuestions: [...startSlice, { ...thisQuestion }, ...endSlice],
-    });
   };
 
   if (isSelected)
@@ -173,7 +197,7 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
             <ReactQuill
               className="w-full"
               placeholder="Enter the text of the Question"
-              value={thisQuestion.questionText}
+              value={thisQuestion?.questionText}
               onChange={handleEditorChange}
             />
 
@@ -187,7 +211,7 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
                       ref={provided.innerRef}
                       className="flex w-fit flex-col gap-y-4 rounded-lg"
                     >
-                      {thisQuestion.options?.map((option, index) => (
+                      {thisQuestion?.options?.map((option, index) => (
                         <Draggable
                           key={option.id}
                           draggableId={option.id}
@@ -227,7 +251,7 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
                                   type="radio"
                                   value={option.value}
                                   checked={
-                                    thisQuestion.correctAnswer === option.value
+                                    thisQuestion?.correctAnswer === option.value
                                   }
                                   onChange={handleCorrectAnswerChange}
                                 />
@@ -256,10 +280,10 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
                                 onClick={() =>
                                   handleOptionDelete(
                                     option.id,
-                                    thisQuestion.options.length,
+                                    thisQuestion?.options.length,
                                   )
                                 }
-                                disabled={thisQuestion.options.length < 3}
+                                disabled={thisQuestion?.options.length < 3}
                                 className="rounded-full border-none bg-neutral-400 p-1 text-white hover:bg-red-400 disabled:invisible"
                               >
                                 <IoClose size={18} />
@@ -329,7 +353,7 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
                   width="6rem"
                   name="points"
                   type="text"
-                  value={`${thisQuestion.points}`}
+                  value={`${thisQuestion?.points}`}
                   onChange={(e) => handlePointsChange(e, "points")}
                 />
               </div>
@@ -338,7 +362,9 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
             <div className="flex flex-grow flex-col gap-y-2">
               <div className="flex items-center gap-x-1">
                 <Button
-                  onClick={() => document.getElementById("questionImg").click()}
+                  onClick={() =>
+                    document.getElementById("subQuestionImg").click()
+                  }
                   className="w-fit border-none text-sky-700"
                 >
                   <FaImage size={32} />
@@ -346,16 +372,25 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
                 <input
                   className="hidden"
                   type="file"
-                  id="questionImg"
+                  id="subQuestionImg"
                   onChange={handleImageChange}
                 />
               </div>
-              {thisQuestion.questionImg && (
+              {thisQuestion.questionImg &&
+              typeof thisQuestion.questionImg === "string" ? (
                 <img
-                  className="h-full w-full rounded-md object-cover"
-                  src={URL.createObjectURL(thisQuestion.questionImg)}
+                  className="h-fit w-full rounded-md object-cover"
+                  src={thisQuestion.questionImg}
                   alt={thisQuestion.questionText}
                 />
+              ) : (
+                thisQuestion.questionImg && (
+                  <img
+                    className="h-fit w-full rounded-md object-cover"
+                    src={URL.createObjectURL(thisQuestion.questionImg)}
+                    alt={thisQuestion.questionText}
+                  />
+                )
               )}
             </div>
           </div>
@@ -367,13 +402,13 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
             <Button
               disabled={
                 isEqual(
-                  comprehension.subQuestions.find(
-                    (subQuestion) => subQuestion.id === id,
+                  data.question.subQuestions.find(
+                    (subQuestion) => subQuestion._id === id,
                   ),
                   thisQuestion,
                 ) || !isValidated()
               }
-              onClick={handleUpdateQuestion}
+              onClick={updateMutation.mutate}
               className="border-none bg-sky-500 text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-neutral-500"
             >
               Save Question Details
@@ -384,24 +419,24 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
     );
 
   return (
-    <div className="flex h-96 w-full p-4">
+    <div className="flex h-fit w-full p-4">
       <div className="flex h-full flex-[2] flex-col gap-y-8">
-        {thisQuestion.questionText ? (
+        {thisQuestion?.questionText ? (
           <h1
             className="text-xl font-semibold"
-            dangerouslySetInnerHTML={{ __html: thisQuestion.questionText }}
+            dangerouslySetInnerHTML={{ __html: thisQuestion?.questionText }}
           ></h1>
         ) : (
           <h1 className="text-xl font-semibold">
             Enter the Text for the Question
           </h1>
         )}
-        {thisQuestion.options?.map((option, index) => (
+        {thisQuestion?.options?.map((option, index) => (
           <div className="flex items-center gap-x-2 pl-4" key={option.id}>
             <input
               className="h-5 w-5"
               type="radio"
-              checked={option.value === thisQuestion.correctAnswer}
+              checked={option.value === thisQuestion?.correctAnswer}
               readOnly
             />
             {option.value ? <p>{option.value}</p> : <p>Option {index + 1}</p>}
@@ -412,17 +447,24 @@ const SubMCQ = ({ id, comprehension, setComprehension, isSelected }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-2 rounded-md border border-neutral-300 p-2">
             <span>Points: </span>
-            <span>{thisQuestion.points}</span>
+            <span>{thisQuestion?.points}</span>
           </div>
         </div>
-        {thisQuestion.questionImg && (
-          <div className="w-full">
+        {thisQuestion.questionImg &&
+        typeof thisQuestion.questionImg === "string" ? (
+          <img
+            className="h-fit w-full rounded-md object-cover"
+            src={thisQuestion.questionImg}
+            alt={thisQuestion.questionText}
+          />
+        ) : (
+          thisQuestion.questionImg && (
             <img
-              className="rounded-md object-cover"
+              className="h-fit w-full rounded-md object-cover"
               src={URL.createObjectURL(thisQuestion.questionImg)}
-              alt=""
+              alt={thisQuestion.questionText}
             />
-          </div>
+          )
         )}
       </div>
     </div>
@@ -435,6 +477,9 @@ SubMCQ.propTypes = {
   isSelected: PropTypes.bool,
   comprehension: PropTypes.object,
   setComprehension: PropTypes.func,
+  thisQuestion: PropTypes.object,
+  setThisQuestion: PropTypes.func,
+  data: PropTypes.object,
 };
 
 export default SubMCQ;

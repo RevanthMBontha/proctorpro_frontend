@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import ReactQuill from "react-quill";
 import { Draggable, Droppable, DragDropContext } from "@hello-pangea/dnd";
 import Select from "react-select";
@@ -8,20 +8,57 @@ import { IoClose } from "react-icons/io5";
 import { isEqual } from "lodash";
 import { v4 as uuidV4 } from "uuid";
 import Button from "../Button";
-import useTestStore from "../../store/test.store";
 import PropTypes from "prop-types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../../axios";
 
-const Categorise = ({ id, isSelected, setAreEqual }) => {
-  const getQuestionById = useTestStore((state) => state.getQuestionById);
-  const updateQuestion = useTestStore((state) => state.updateQuestion);
-
+const Categorise = ({
+  id,
+  isSelected,
+  thisQuestion,
+  setThisQuestion,
+  setAreEqual,
+  data,
+}) => {
   const categoryRefs = useRef([]);
   const itemRefs = useRef([]);
 
-  const temp = getQuestionById(id);
-  const [thisQuestion, setThisQuestion] = useState({ ...temp });
+  const queryClient = useQueryClient();
+
   const [hasGeneratedCorrectAnswer, setHasGeneratedCorrectedAnswer] =
     useState(true);
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const formData = new FormData();
+      formData.append("type", JSON.stringify(thisQuestion.type));
+      formData.append(
+        "questionText",
+        JSON.stringify(thisQuestion.questionText),
+      );
+      formData.append("options", JSON.stringify(thisQuestion.options));
+      formData.append(
+        "correctAnswer",
+        JSON.stringify(thisQuestion.correctAnswer),
+      );
+      formData.append("points", JSON.stringify(thisQuestion.points));
+      formData.append("clozeText", JSON.stringify(thisQuestion.clozeText));
+      formData.append(
+        "subQuestions",
+        JSON.stringify(thisQuestion.subQuestions),
+      );
+      formData.append("categories", JSON.stringify(thisQuestion.categories));
+      formData.append("items", JSON.stringify(thisQuestion.items));
+
+      formData.append("file", thisQuestion.questionImg);
+
+      const response = await api.patch(`/questions/${id}`, formData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["questions", `${data.question._id}`]);
+    },
+  });
 
   // Function to handle drag end for Categories
   const handleOnCategoryDragEnd = (result) => {
@@ -231,7 +268,7 @@ const Categorise = ({ id, isSelected, setAreEqual }) => {
     setHasGeneratedCorrectedAnswer(false);
   };
 
-  // Function to delete an option on click of delete button
+  // Function to delete an category on click of delete button
   const handleCategoryDelete = (id, length) => {
     const thisCategory = thisQuestion.categories.find((cat) => cat.id === id);
     if (length > 2) {
@@ -253,6 +290,7 @@ const Categorise = ({ id, isSelected, setAreEqual }) => {
       setHasGeneratedCorrectedAnswer(false);
     }
   };
+
   // Function to delete an option on click of delete button
   const handleItemDelete = (id, length) => {
     if (length > 2) {
@@ -267,19 +305,20 @@ const Categorise = ({ id, isSelected, setAreEqual }) => {
   };
 
   // Function to check if all necessary inputs are filled or not
-  const isValidated = () => {
+  const isValidated = useCallback(() => {
     // Empty Question Text case
     if (!thisQuestion.questionText) return false;
 
+    if (thisQuestion.categories.length === 0) return false;
+
+    if (thisQuestion.items.length === 0) return false;
+
     return true;
-  };
+  }, [thisQuestion.questionText, thisQuestion.categories, thisQuestion.items]);
 
-  // Function to update the Question in Store
-  const handleUpdateStore = () => {
-    updateQuestion(id, thisQuestion);
-  };
-
-  setAreEqual(isEqual(getQuestionById(id), thisQuestion) && isValidated());
+  useEffect(() => {
+    setAreEqual(isEqual(data.question, thisQuestion) && isValidated());
+  }, [data, thisQuestion, setAreEqual, isValidated]);
 
   if (isSelected)
     return (
@@ -606,12 +645,21 @@ const Categorise = ({ id, isSelected, setAreEqual }) => {
                   onChange={handleImageChange}
                 />
               </div>
-              {thisQuestion.questionImg && (
+              {thisQuestion.questionImg &&
+              typeof thisQuestion.questionImg === "string" ? (
                 <img
-                  className="h-auto w-full rounded-md object-cover"
-                  src={URL.createObjectURL(thisQuestion.questionImg)}
+                  className="h-fit w-full rounded-md object-cover"
+                  src={thisQuestion.questionImg}
                   alt={thisQuestion.questionText}
                 />
+              ) : (
+                thisQuestion.questionImg && (
+                  <img
+                    className="h-fit w-full rounded-md object-cover"
+                    src={URL.createObjectURL(thisQuestion.questionImg)}
+                    alt={thisQuestion.questionText}
+                  />
+                )
               )}
             </div>
           </div>
@@ -628,10 +676,8 @@ const Categorise = ({ id, isSelected, setAreEqual }) => {
               Generate Correct Answer
             </Button>
             <Button
-              disabled={
-                isEqual(getQuestionById(id), thisQuestion) || !isValidated()
-              }
-              onClick={handleUpdateStore}
+              disabled={isEqual(data.question, thisQuestion) || !isValidated()}
+              onClick={updateMutation.mutate}
               className="border-none bg-sky-500 text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-neutral-500"
             >
               Save Question Details
@@ -669,20 +715,27 @@ const Categorise = ({ id, isSelected, setAreEqual }) => {
         </div>
       </div>
       <div className="flex h-full flex-[1] flex-col gap-y-8 p-1">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-x-2 rounded-md border border-neutral-300 p-2">
             <span>Points: </span>
             <span>{thisQuestion.points}</span>
           </div>
         </div>
-        {thisQuestion.questionImg && (
-          <div className="w-full">
+        {thisQuestion.questionImg &&
+        typeof thisQuestion.questionImg === "string" ? (
+          <img
+            className="h-fit w-full rounded-md object-cover"
+            src={thisQuestion.questionImg}
+            alt={thisQuestion.questionText}
+          />
+        ) : (
+          thisQuestion.questionImg && (
             <img
-              className="rounded-md object-cover"
+              className="h-fit w-full rounded-md object-cover"
               src={URL.createObjectURL(thisQuestion.questionImg)}
-              alt=""
+              alt={thisQuestion.questionText}
             />
-          </div>
+          )
         )}
       </div>
     </div>
@@ -693,6 +746,9 @@ Categorise.propTypes = {
   id: PropTypes.string,
   isSelected: PropTypes.bool,
   setAreEqual: PropTypes.func,
+  thisQuestion: PropTypes.object,
+  setThisQuestion: PropTypes.func,
+  data: PropTypes.object,
 };
 
 export default Categorise;
