@@ -2,8 +2,8 @@ import { FaGraduationCap, FaGoogle } from "react-icons/fa6";
 import { auth, provider, signInWithPopup } from "./../firebase.js";
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { BASE_URL } from "../api-routes.js";
+import api from "../axios.js";
 
 const Authenticate = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const Authenticate = () => {
         tests: [],
       };
 
-      const response = await axios.post(`${BASE_URL}/auth/login`, userDetails);
+      const response = await api.post(`${BASE_URL}/auth/login`, userDetails);
 
       // Add the user and the token to localstorage
       localStorage.setItem("user", JSON.stringify(response.data.user));
