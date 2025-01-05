@@ -20,7 +20,7 @@ const Authenticate = () => {
         tests: [],
       };
 
-      const response = await api.post(`${BASE_URL}/auth/login`, userDetails);
+      const response = await api.post(`/auth/login`, userDetails);
 
       // Add the user and the token to localstorage
       localStorage.setItem("user", JSON.stringify(response.data.user));
